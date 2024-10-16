@@ -191,14 +191,13 @@
     </div>
   </div>
 </template>
+
 <script>
 import { h } from 'vue'
 import TextEditor from '@/components/TextEditor.vue'
-import ReadmeEditor from '@/components/ReadmeEditor.vue'
-import CommentsArea from '@/components/CommentsArea.vue'
+import CommentsList from '@/components/CommentsList.vue'
 import { focus } from '@/directives'
 import { Autocomplete, Dropdown, LoadingText, TextInput } from 'frappe-ui'
-import CommentsList from '@/components/CommentsList.vue'
 import TaskStatusIcon from '@/components/icons/TaskStatusIcon.vue'
 import TaskPriorityIcon from '@/components/icons/TaskPriorityIcon.vue'
 import { activeUsers } from '@/data/users'
@@ -307,13 +306,11 @@ export default {
     },
   },
   components: {
-    ReadmeEditor,
     TextEditor,
-    CommentsArea,
+    CommentsList,
     Autocomplete,
     TextInput,
     Dropdown,
-    CommentsList,
     TaskStatusIcon,
     LoadingText,
     TaskPriorityIcon,
