@@ -77,17 +77,17 @@
         />
         <div class="mt-8 flex flex-wrap items-center gap-2 sm:hidden">
           <Autocomplete
-            placeholder="Assign a user"
-            :options="assignableUsers"
-            :value="$resources.task.doc.assigned_to"
-            @change="
-              (option) => {
-                $resources.task.setValue.submit({
-                  assigned_to: option?.value || '',
-                })
-              }
-            "
-          />
+  placeholder="Assign a user"
+  :options="assignableUsers"
+  v-model="$resources.task.doc.assigned_to"
+  @change="
+    (option) => {
+      $resources.task.setValue.submit({
+        assigned_to: option?.value || '',
+      })
+    }
+  "
+/>
           <TextInput
             type="date"
             placeholder="Due date"
