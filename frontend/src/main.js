@@ -14,6 +14,7 @@ import {
   pageMetaPlugin,
   resourcesPlugin,
 } from 'frappe-ui'
+import * as Sentry from '@sentry/vue'
 import router from './router'
 import App from './App.vue'
 import './index.css'
@@ -60,20 +61,28 @@ app.config.globalProperties.$isSessionUser = (email) => {
 
 let socket
 if (import.meta.env.DEV) {
-  frappeRequest({ url: '/api/method/gameplan.www.g.get_context_for_dev' }).then(
-    (values) => {
-      for (let key in values) {
-        window[key] = values[key]
-      }
-      socket = initSocket()
-      app.config.globalProperties.$socket = socket
-      app.mount('#app')
+  frappeRequest({ url: '/api/method/gameplan.www.g.get_context_for_dev' }).then((values) => {
+    for (let key in values) {
+      window[key] = values[key]
     }
-  )
+    socket = initSocket()
+    app.config.globalProperties.$socket = socket
+    app.mount('#app')
+  })
 } else {
   socket = initSocket()
   app.config.globalProperties.$socket = socket
   app.mount('#app')
+}
+
+// sentry error logging
+if (import.meta.env.PROD && window.gameplan_frontend_sentry_dsn) {
+  Sentry.init({
+    app,
+    dsn: window.gameplan_frontend_sentry_dsn,
+    integrations: [Sentry.browserTracingIntegration({ router })],
+    tracesSampleRate: 1.0,
+  })
 }
 
 if (import.meta.env.DEV) {

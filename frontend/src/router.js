@@ -93,6 +93,11 @@ const routes = [
         path: 'replies',
         component: () => import('@/pages/PersonProfileReplies.vue'),
       },
+      {
+        name: 'PersonProfileBookmarks',
+        path: 'bookmarks',
+        component: () => import('@/pages/PersonProfileBookmarks.vue'),
+      },
     ],
   },
   {
