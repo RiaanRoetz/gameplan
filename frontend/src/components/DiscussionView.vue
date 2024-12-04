@@ -2,9 +2,9 @@
   <div class="relative flex h-full flex-col" v-if="postId && discussion">
     <div class="mx-auto w-full max-w-3xl">
       <div class="pb-16">
-        <div class="pb-4 pt-16 flex w-full items-center sticky top-0 z-[1] bg-surface-white">
+        <div class="pb-2 pt-14 flex w-full items-center sticky top-0 z-[1] bg-surface-white">
           <UserProfileLink class="mr-3" :user="discussion.owner">
-            <UserAvatar :user="discussion.owner" />
+            <UserAvatar size="lg" :user="discussion.owner" />
           </UserProfileLink>
           <div class="flex flex-col md:block">
             <UserProfileLink
@@ -36,39 +36,9 @@
             />
           </div>
         </div>
-        <div class="pb-4">
+        <div :class="{ 'pb-4 mt-1': !editingPost }">
           <div class="flex items-start justify-between space-x-1">
-            <div v-if="editingTitle" class="w-full">
-              <div class="mb-2">
-                <input
-                  v-if="editingTitle"
-                  type="text"
-                  class="w-full rounded border-0 bg-surface-gray-2 text-ink-gray-9 px-2 py-1 text-xl font-semibold focus:ring-0"
-                  ref="title"
-                  v-model="discussion.title"
-                  placeholder="Title"
-                  @keydown.enter="
-                    () => {
-                      $resources.discussion.setValue
-                        .submit({ title: discussion.title })
-                        .then(() => this.updateUrlSlug())
-                      editingTitle = false
-                    }
-                  "
-                  @keydown.esc="
-                    () => {
-                      $resources.discussion.reload()
-                      editingTitle = false
-                    }
-                  "
-                  v-focus
-                />
-                <p class="mt-1 text-sm text-ink-gray-5">
-                  Edit title and press enter. Press escape to cancel.
-                </p>
-              </div>
-            </div>
-            <h1 v-else class="flex items-center text-2xl font-semibold">
+            <h1 v-if="!editingPost" class="flex items-center text-2xl font-semibold">
               <Tooltip v-if="discussion.closed_at" text="This discussion is closed">
                 <LucideLock class="mr-2 h-4 w-4 text-ink-gray-7" :stroke-width="2" />
               </Tooltip>
@@ -77,7 +47,7 @@
               </span>
             </h1>
           </div>
-          <div class="mt-2 flex items-center text-base" v-show="!editingTitle">
+          <div class="mt-2 flex items-center text-base" v-show="!editingPost">
             <DiscussionBreadcrumbs :discussion="discussion" />
             <span class="px-1.5 text-ink-gray-8">&middot;</span>
             <span class="text-ink-gray-5">
@@ -91,9 +61,22 @@
         </div>
         <div
           :class="{
-            'rounded-lg border p-4 focus-within:border-outline-gray-3': editingContent,
+            'rounded-lg border p-4 focus-within:border-outline-gray-3': editingPost,
           }"
         >
+          <div v-if="editingPost" class="w-full">
+            <div class="mb-2">
+              <input
+                v-if="editingPost"
+                type="text"
+                class="w-full rounded border-0 text-ink-gray-9 px-0 py-0.5 text-2xl font-semibold focus:ring-0"
+                ref="title"
+                v-model="discussion.title"
+                placeholder="Title"
+                v-focus
+              />
+            </div>
+          </div>
           <CommentEditor
             :value="discussion.content"
             @change="discussion.content = $event"
@@ -101,19 +84,20 @@
               variant: 'solid',
               onClick: () => {
                 $resources.discussion.setValue.submit({
+                  title: discussion.title,
                   content: discussion.content,
                 })
-                editingContent = false
+                editingPost = false
               },
               loading: $resources.discussion.setValue.loading,
             }"
             :discardButtonProps="{
               onClick: () => {
-                editingContent = false
+                editingPost = false
                 $resources.discussion.reload()
               },
             }"
-            :editable="editingContent"
+            :editable="editingPost"
           />
         </div>
         <div class="mt-3">
@@ -228,6 +212,8 @@ export default {
           reopenDiscussion: 'reopen_discussion',
           pinDiscussion: 'pin_discussion',
           unpinDiscussion: 'unpin_discussion',
+          addBookmark: 'add_bookmark',
+          removeBookmark: 'remove_bookmark',
           moveToProject: {
             method: 'move_to_project',
             validate(params) {
@@ -268,43 +254,19 @@ export default {
         },
       }
     },
-    bookmark() {
-      return {
-        type: 'resource',
-        url: 'gameplan.api.check_bookmark',
-        params: {
-          discussionId: this.postId,
-        },
-        auto: true,
-        onSuccess(data) {
-          this.bookmarkStatus = data
-        },
-      }
-    },
   },
   data() {
     return {
-      editingContent: false,
-      editingTitle: false,
+      editingPost: false,
       discussionMoveDialog: {
         show: false,
         project: null,
       },
       showRevisionsDialog: false,
       showNavbar: false,
-      bookmarkStatus: false,
     }
   },
   methods: {
-    bookMarkDiscussion() {
-      let data = {
-        discussion: this.discussion.name,
-        remove_bookmark: this.bookmarkStatus,
-      }
-      call('gameplan.api.bookmark_discussion', { data }).then((res) => {
-        this.$resources.bookmark.submit()
-      })
-    },
     copyLink() {
       let location = window.location
       let url = `${location.origin}${location.pathname}`
@@ -356,17 +318,10 @@ export default {
     actions() {
       return [
         {
-          label: 'Edit Title',
+          label: 'Edit',
           icon: 'edit',
           onClick: () => {
-            this.editingTitle = true
-          },
-        },
-        {
-          label: 'Edit Post',
-          icon: 'edit',
-          onClick: () => {
-            this.editingContent = true
+            this.editingPost = true
           },
         },
         {
@@ -461,15 +416,49 @@ export default {
           },
         },
         {
-          label: `${this.bookmarkStatus ? 'Remove Bookmark' : 'Add Bookmark'}`,
+          label: 'Bookmark',
           icon: 'bookmark',
-          onClick: this.bookMarkDiscussion,
+          onClick: () => {
+            this.$resources.discussion.addBookmark.submit()
+          },
+          condition: () => !this.discussion.is_bookmarked,
+        },
+        {
+          label: 'Remove Bookmark',
+          icon: 'bookmark',
+          onClick: () => {
+            this.$resources.discussion.removeBookmark.submit()
+          },
+          condition: () => this.discussion.is_bookmarked,
         },
         {
           label: 'Move to...',
           icon: 'log-out',
           onClick: () => {
             this.discussionMoveDialog.show = true
+          },
+        },
+        {
+          label: 'Delete',
+          icon: 'trash',
+          onClick: () => {
+            $dialog({
+              title: 'Delete',
+              message: 'Are you sure you want to delete this post? This is irreversible!',
+              actions: [
+                {
+                  label: 'Delete',
+                  variant: 'solid',
+                  theme: 'red',
+                  onClick: ({ close }) => {
+                    return this.$resources.discussion.delete.submit().then(() => {
+                      this.$router.replace({ name: 'Project' })
+                      close()
+                    })
+                  },
+                },
+              ],
+            })
           },
         },
       ]
@@ -481,7 +470,6 @@ export default {
     if (!project) return
     return {
       title: [this.discussion.title, project.title].filter(Boolean).join(' - '),
-      emoji: project.icon,
     }
   },
 }
