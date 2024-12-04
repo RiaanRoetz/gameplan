@@ -19,6 +19,7 @@ export default {
         realtime: true,
         whitelistedMethods: {
           moveToTeam: 'move_to_team',
+          mergeWithProject: 'merge_with_project',
           archive: 'archive',
           unarchive: 'unarchive',
           inviteMembers: 'invite_members',
@@ -37,8 +38,7 @@ export default {
   pageMeta() {
     if (!this.$resources.project.doc) return
     return {
-      title: `${this.$resources.project.doc.title} - ${this.team.doc.title}`,
-      emoji: this.$resources.project.doc.icon,
+      title: `${this.$resources.project.doc.title} | ${this.team.doc.title}`,
     }
   },
 }
